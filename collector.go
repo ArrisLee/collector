@@ -10,7 +10,8 @@ type collector struct {
 	Client                *sftplib.Client
 	SourceFileDir         string
 	SoureFileNameRegex    string
-	LocalFileDir          string
+	GBucketImportFileDir  string
+	GBucketRawFileDir     string
 	RenameDownloadedFiles bool
 	NewFileNamePrefix     string
 	DeleteSourceFiles     bool
@@ -25,7 +26,7 @@ func (c *collector) Init(sourceSFTPAddr, sourceSFTPUser, sourceSFTPPass string, 
 	return nil
 }
 
-func (c *collector) Config(sourceFileDir, localFileDir, soureFileNameRegex, newFileNamePrefix string, renameDownloadedFiles, deleteSourceFiles bool) error {
+func (c *collector) Config(sourceFileDir, importFileDir, rawFileDir, soureFileNameRegex, newFileNamePrefix string, renameDownloadedFiles, deleteSourceFiles bool) error {
 	if c == nil || c.Client == nil {
 		return errors.New("Nil collector or SFTP client obj")
 	}
@@ -33,16 +34,17 @@ func (c *collector) Config(sourceFileDir, localFileDir, soureFileNameRegex, newF
 		c.Client.Close()
 		return errors.New("Invalid source file download directory")
 	}
-	if localFileDir == "" {
+	if importFileDir == "" || rawFileDir == "" {
 		c.Client.Close()
-		return errors.New("Invalid local file storage directory")
+		return errors.New("Invalid Google bucket storage directory")
 	}
 	if renameDownloadedFiles && newFileNamePrefix == "" {
 		c.Client.Close()
 		return errors.New("Invalid new file name prefix")
 	}
 	c.SourceFileDir = sourceFileDir
-	c.LocalFileDir = localFileDir
+	c.GBucketImportFileDir = importFileDir
+	c.GBucketRawFileDir = rawFileDir
 	c.RenameDownloadedFiles = renameDownloadedFiles
 	if c.RenameDownloadedFiles {
 		c.NewFileNamePrefix = newFileNamePrefix
@@ -56,7 +58,7 @@ func (c *collector) Config(sourceFileDir, localFileDir, soureFileNameRegex, newF
 
 func (c *collector) Run() error {
 	defer c.Client.Close()
-	if err := c.Client.DownloadFiles(c.SourceFileDir, c.LocalFileDir, c.SoureFileNameRegex, c.NewFileNamePrefix, c.DeleteSourceFiles); err != nil {
+	if err := c.Client.DownloadFiles(c.SourceFileDir, c.GBucketImportFileDir, c.GBucketRawFileDir, c.SoureFileNameRegex, c.NewFileNamePrefix, c.DeleteSourceFiles); err != nil {
 		return err
 	}
 	return nil
