@@ -21,7 +21,7 @@ func main() {
 	wg := &sync.WaitGroup{}
 	for _, serverName := range sourceServerList {
 		wg.Add(1)
-		go runCollector(serverName, localFileStoragePath, wg)
+		go runCollector(serverName, viper.GetString("google_storage_bucket_name"), wg)
 	}
 	wg.Wait()
 }
