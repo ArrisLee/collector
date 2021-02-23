@@ -1,0 +1,39 @@
+{
+    "environment": "test",
+    "upload_sample_testing_files":true,
+    "test_sftp_host":"sftp.test.srv.nz",
+    "test_sftp_port":22,
+    "test_sftp_user": "root",
+    "test_sftp_password": "password",
+    "google_auth_json_location":"~/files/gcp_auth.json",
+    "google_storage_bucket_name":"collector_demo_nbucket",
+    "active_source_sftp_servers": "srvone,srvtwo",
+    "source_sftp_servers":{
+        "srvone": {
+            "sftp_host": "sftp.srvone.nz",
+            "sftp_port":22,
+            "sftp_user": "user",
+            "sftp_password": "pass",
+            "source_file_dir": "/srvone_remote",
+            "gbucket_dir": "import_files/srvone",
+            "gbucket_raw_files_dir": "raw_store_one/srvone",
+            "filename_regex": "^[0-9_]*.txt",
+            "rename_files_on_download": true,
+            "delete_files_after_download": true
+
+        },
+        "srvtwo": {
+            "sftp_host": "sftp.srvtwo.nz",
+            "sftp_port": 22,
+            "sftp_user": "user",
+            "sftp_password": "pass",
+            "source_file_dir": "/srvtwo_remote",
+            "gbucket_dir": "import_files/srvtwo",
+            "gbucket_raw_files_dir": "raw_store_one/srvtwo",
+            "filename_regex": "^[A-Za-z]{1}[0-9]*.txt",
+            "rename_files_on_download": true,
+            "delete_files_after_download": true
+        }
+}
+    
+}
