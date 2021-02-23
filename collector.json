@@ -6,7 +6,7 @@
     "test_sftp_user": "root",
     "test_sftp_password": "password",
     "google_auth_json_location":"~/files/gcp_auth.json",
-    "google_storage_bucket_name":"collector_demo_nbucket",
+    "google_storage_bucket_name":"collector_demo_bucket",
     "active_source_sftp_servers": "srvone,srvtwo",
     "source_sftp_servers":{
         "srvone": {
