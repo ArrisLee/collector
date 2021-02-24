@@ -76,10 +76,10 @@ func uploadSampleFiles() {
 		viper.GetString("test_sftp_user"),
 		viper.GetString("test_sftp_password"),
 		viper.GetInt("test_sftp_port"))
-	sc.UploadFile("samples_file/sample_srv_one.txt", "/srvone_remote/2021_01_01_00_00_01_00001.txt")
-	sc.UploadFile("samples_file/sample_srv_one.txt", "/srvone_remote/2020_12_31_23_59_59_10000.txt")
-	sc.UploadFile("samples_file/sample_srv_one.txt", "/srvone_remote/chaos_monkey_001.txt")
-	sc.UploadFile("samples_file/sample_srv_two.txt", "/srvtwo_remote/F202012300001001.txt")
-	sc.UploadFile("samples_file/sample_srv_two.txt", "/srvtwo_remote/F202102192359666.txt")
-	sc.UploadFile("samples_file/sample_srv_two.txt", "/srvtwo_remote/chaosmonkey0230103.txt")
+	sc.UploadFile("sample_file/sample_srv_one.txt", "/srvone_remote/2021_01_01_00_00_01_00001.txt")
+	sc.UploadFile("sample_file/sample_srv_one.txt", "/srvone_remote/2020_12_31_23_59_59_10000.txt")
+	sc.UploadFile("sample_file/sample_srv_one.txt", "/srvone_remote/chaos_monkey_001.txt")
+	sc.UploadFile("sample_file/sample_srv_two.txt", "/srvtwo_remote/F202012300001001.txt")
+	sc.UploadFile("sample_file/sample_srv_two.txt", "/srvtwo_remote/F202102192359666.txt")
+	sc.UploadFile("sample_file/sample_srv_two.txt", "/srvtwo_remote/chaosmonkey0230103.txt")
 }
