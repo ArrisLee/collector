@@ -10,7 +10,6 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
-	"sync"
 	"time"
 
 	"cloud.google.com/go/storage"
@@ -97,49 +96,41 @@ func (sc *Client) UploadFile(localFile, remoteFile string) error {
 }
 
 // DownloadFile downloads a single file from sftp server
-func (sc *Client) DownloadFile(remoteFile, importFile, rawFile string, deleteOnDownload bool) error {
+func (sc *Client) DownloadFile(remoteFile, importFile string, rawFiles []string, deleteOnDownload bool) error {
+	//open remote file
 	srcFile, err := sc.Open(remoteFile)
 	if err != nil {
 		return err
 	}
 	defer srcFile.Close()
+
+	//init GCP storage client
 	ctx := context.Background()
 	gclient, err := storage.NewClient(ctx)
 	if err != nil {
-		return fmt.Errorf("GCP storage.NewClient: %v", err)
+		return fmt.Errorf("GCP storage.NewClient, err: %v", err)
 	}
 	defer gclient.Close()
+	bucket := gclient.Bucket(viper.GetString("google_storage_bucket_name"))
 
-	dstImport := gclient.Bucket(viper.GetString("google_storage_bucket_name")).Object(importFile)
-	dstRawOne := gclient.Bucket(viper.GetString("google_storage_bucket_name")).Object(rawFile)
+	//save import/renamed files to the bucket
+	ctx, cancel := context.WithTimeout(ctx, time.Second*20)
+	defer cancel()
+	dstImport := bucket.Object(importFile)
+	imtFileWriter := dstImport.NewWriter(ctx)
+	defer imtFileWriter.Close()
+	if _, err := io.Copy(imtFileWriter, srcFile); err != nil {
+		return fmt.Errorf("Failed to save to bucket, err: %v", err)
+	}
 
-	wg := sync.WaitGroup{}
-	wg.Add(1)
-	go func() {
-		ctx := context.Background()
-		ctx, cancel := context.WithTimeout(ctx, time.Second*10)
-		w1 := dstImport.NewWriter(ctx)
-		defer w1.Close()
-		defer cancel()
-		defer wg.Done()
-		if _, err := io.Copy(w1, srcFile); err != nil {
-			log.Printf("Failed to copy to bucket: %v\n", err)
+	//save raw file copies to the raw file dir(s)
+	for i := range rawFiles {
+		dstRaw := bucket.Object(rawFiles[i])
+		if _, err := dstRaw.CopierFrom(dstImport).Run(ctx); err != nil {
+			return fmt.Errorf("Failed to save raw file copy %s, err: %v", rawFiles[i], err)
 		}
-	}()
+	}
 
-	wg.Add(1)
-	go func() {
-		ctx := context.Background()
-		ctx, cancel := context.WithTimeout(ctx, time.Second*10)
-		w2 := dstRawOne.NewWriter(ctx)
-		defer w2.Close()
-		defer cancel()
-		defer wg.Done()
-		if _, err := io.Copy(w2, srcFile); err != nil {
-			log.Printf("Failed to copy to bucket: %v\n", err)
-		}
-	}()
-	wg.Wait()
 	if deleteOnDownload {
 		go sc.DeleteFile(remoteFile)
 	}
@@ -147,7 +138,7 @@ func (sc *Client) DownloadFile(remoteFile, importFile, rawFile string, deleteOnD
 }
 
 // DownloadFiles downloads all files from a dir on sftp server
-func (sc *Client) DownloadFiles(remotePath, bucketImportDir, bucketRawDir, regex, newFileNamePrefix string, deleteOnDownload bool) error {
+func (sc *Client) DownloadFiles(remotePath, bucketImportDir, bucketRawDirs, regex, newFileNamePrefix string, deleteOnDownload bool) error {
 	fileInfo, err := sc.ReadDir(remotePath)
 	if err != nil {
 		return err
@@ -164,14 +155,18 @@ func (sc *Client) DownloadFiles(remotePath, bucketImportDir, bucketRawDir, regex
 		}
 		remoteFile := remotePath + string(filepath.Separator) + fileInfo[i].Name()
 		importFile := bucketImportDir + string(filepath.Separator) + fileInfo[i].Name()
-		rawFile := bucketRawDir + string(filepath.Separator) + fileInfo[i].Name()
 		if newFileNamePrefix != "" {
 			//rename file when downloading if necessary
 			importFile = bucketImportDir + string(filepath.Separator) + regenFileName(newFileNamePrefix, fileInfo[i].Name())
 		}
-		if err := sc.DownloadFile(remoteFile, importFile, rawFile, deleteOnDownload); err != nil {
+		var rawFiles []string
+		for i := range strings.Split(bucketRawDirs, ",") {
+			rawFile := strings.Split(bucketRawDirs, ",")[i] + string(filepath.Separator) + fileInfo[i].Name()
+			rawFiles = append(rawFiles, rawFile)
+		}
+		if err := sc.DownloadFile(remoteFile, importFile, rawFiles, deleteOnDownload); err != nil {
 			//log the file when download failed
-			log.Printf("Failed to download remote file: %s, err: %v", remoteFile, err)
+			log.Printf("Failed to perform file collecting for remote file: %s, err: %v", remoteFile, err)
 		}
 		time.Sleep(1 * time.Second)
 	}

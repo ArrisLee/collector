@@ -16,7 +16,7 @@
             "sftp_password": "pass",
             "source_file_dir": "/srvone_remote",
             "gbucket_import_file_dir": "import_files/srvone",
-            "gbucket_raw_file_dir": "raw_store_one/srvone",
+            "gbucket_raw_file_dirs": "raw_store_one/srvone,raw_store_one/srvtwo",
             "filename_regex": "^[0-9_]*.txt",
             "rename_files_on_download": true,
             "delete_files_after_download": true
@@ -28,12 +28,12 @@
             "sftp_user": "user",
             "sftp_password": "pass",
             "source_file_dir": "/srvtwo_remote",
-            "gbucket_import_file_dir": "import_files/srvtwo",
-            "gbucket_raw_file_dir": "raw_store_one/srvtwo",
+            "gbucket_import_file_dirs": "import_files/srvtwo",
+            "gbucket_raw_file_dirs": "raw_store_one/srvtwo",
             "filename_regex": "^[A-Za-z]{1}[0-9]*.txt",
             "rename_files_on_download": true,
             "delete_files_after_download": true
         }
-}
+    }
     
 }

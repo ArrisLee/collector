@@ -11,7 +11,7 @@ type collector struct {
 	SourceFileDir         string
 	SoureFileNameRegex    string
 	GBucketImportFileDir  string
-	GBucketRawFileDir     string
+	GBucketRawFileDirs    string
 	RenameDownloadedFiles bool
 	NewFileNamePrefix     string
 	DeleteSourceFiles     bool
@@ -26,7 +26,7 @@ func (c *collector) Init(sourceSFTPAddr, sourceSFTPUser, sourceSFTPPass string, 
 	return nil
 }
 
-func (c *collector) Config(sourceFileDir, importFileDir, rawFileDir, soureFileNameRegex, newFileNamePrefix string, renameDownloadedFiles, deleteSourceFiles bool) error {
+func (c *collector) Config(sourceFileDir, importFileDir, rawFileDirs, soureFileNameRegex, newFileNamePrefix string, renameDownloadedFiles, deleteSourceFiles bool) error {
 	if c == nil || c.Client == nil {
 		return errors.New("Nil collector or SFTP client obj")
 	}
@@ -34,9 +34,9 @@ func (c *collector) Config(sourceFileDir, importFileDir, rawFileDir, soureFileNa
 		c.Client.Close()
 		return errors.New("Invalid source file download directory")
 	}
-	if importFileDir == "" || rawFileDir == "" {
+	if importFileDir == "" {
 		c.Client.Close()
-		return errors.New("Invalid Google bucket storage directory")
+		return errors.New("Invalid Google bucket import file directory")
 	}
 	if renameDownloadedFiles && newFileNamePrefix == "" {
 		c.Client.Close()
@@ -44,7 +44,9 @@ func (c *collector) Config(sourceFileDir, importFileDir, rawFileDir, soureFileNa
 	}
 	c.SourceFileDir = sourceFileDir
 	c.GBucketImportFileDir = importFileDir
-	c.GBucketRawFileDir = rawFileDir
+	if rawFileDirs != "" {
+		c.GBucketRawFileDirs = rawFileDirs
+	}
 	c.RenameDownloadedFiles = renameDownloadedFiles
 	if c.RenameDownloadedFiles {
 		c.NewFileNamePrefix = newFileNamePrefix
@@ -58,7 +60,7 @@ func (c *collector) Config(sourceFileDir, importFileDir, rawFileDir, soureFileNa
 
 func (c *collector) Run() error {
 	defer c.Client.Close()
-	if err := c.Client.DownloadFiles(c.SourceFileDir, c.GBucketImportFileDir, c.GBucketRawFileDir, c.SoureFileNameRegex, c.NewFileNamePrefix, c.DeleteSourceFiles); err != nil {
+	if err := c.Client.DownloadFiles(c.SourceFileDir, c.GBucketImportFileDir, c.GBucketRawFileDirs, c.SoureFileNameRegex, c.NewFileNamePrefix, c.DeleteSourceFiles); err != nil {
 		return err
 	}
 	return nil
