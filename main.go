@@ -47,7 +47,7 @@ func warmup() {
 
 func runCollector(serverName, localFileStoragePath string, wg *sync.WaitGroup) {
 	defer wg.Done()
-	//STEP 2: read configs for each server
+	//STEP 1: read configs for each server
 	sftpAddress := viper.GetString(fmt.Sprintf("source_sftp_servers.%s.sftp_host", serverName))
 	sftpUser := viper.GetString(fmt.Sprintf("source_sftp_servers.%s.sftp_user", serverName))
 	sftpPass := viper.GetString(fmt.Sprintf("source_sftp_servers.%s.sftp_password", serverName))
@@ -59,17 +59,17 @@ func runCollector(serverName, localFileStoragePath string, wg *sync.WaitGroup) {
 	renameFilesOnDownload := viper.GetBool(fmt.Sprintf("source_sftp_servers.%s.rename_files_on_download", serverName))
 	deleteFilesAfterDownlaod := viper.GetBool(fmt.Sprintf("source_sftp_servers.%s.delete_files_after_download", serverName))
 	collector := &collector{}
-	//STEP 3: establish SFTP connection
+	//STEP 2: establish SFTP connection
 	if err := collector.Init(sftpAddress, sftpUser, sftpPass, sftpPort); err != nil {
 		log.Printf("Failed to init collector for: %s, err: %v", serverName, err)
 		return
 	}
-	//STEP 4: config SFTP file download params
+	//STEP 3: config SFTP file download params
 	if err := collector.Config(srcFileDir, importFileDir, rawFileDirs, srcFileNameRegex, serverName, renameFilesOnDownload, deleteFilesAfterDownlaod); err != nil {
 		log.Printf("Failed to configure collector for: %s, err: %v", serverName, err)
 		return
 	}
-	//STEP 5: run the collector
+	//STEP 4: run the collector
 	log.Println(serverName + " collector started...")
 	if err := collector.Run(); err != nil {
 		log.Printf("Failed to run collector for: %s, err: %v", serverName, err)
